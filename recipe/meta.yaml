@@ -22,7 +22,8 @@ requirements:
     - {{ compiler('cxx') }}
   run:
     - python >=3.10,<3.12
-    - python_abi 3.10.* *_cp310
+      #    - python_abi 3.10.* *_cp310
+    - python_abi >= 3.10 
     - pybind11
     - numpy
 
