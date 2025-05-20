@@ -13,11 +13,13 @@ jobs:
             sudo apt install -y libboost-all-dev
             wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
             bash miniconda.sh -b -p $HOME/miniconda
-            export PATH="$HOME/miniconda/bin:$PATH"
-            source $HOME/miniconda/etc/profile.d/conda.sh
+            echo 'export PATH="$HOME/miniconda/bin:$PATH"' >> ~/.bashrc
+            source ~/.bashrc
       - run:
           name: Verify Conda Installation
           command: |
+            source $HOME/miniconda/etc/profile.d/conda.sh
+            export PATH="$HOME/miniconda/bin:$PATH"
             echo "PATH: $PATH"
             conda --version
             which conda
@@ -25,11 +27,15 @@ jobs:
           name: Set Up Conda Environment
           command: |
             source $HOME/miniconda/etc/profile.d/conda.sh
+            export PATH="$HOME/miniconda/bin:$PATH"
             conda create -n build-env python=3.9 -y
             conda activate build-env
       - run:
           name: Build Stim Package
-          command: conda build recipe/
+          command: |
+            source $HOME/miniconda/etc/profile.d/conda.sh
+            export PATH="$HOME/miniconda/bin:$PATH"
+            conda build recipe/
 
 workflows:
   version: 2
