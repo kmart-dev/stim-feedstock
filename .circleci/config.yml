@@ -24,11 +24,11 @@ jobs:
             conda --version
             which conda
       - run:
-          name: Set Up Conda Environment
+          name: Set Up Conda Environment & Install `conda-build`
           command: |
             source $HOME/miniconda/etc/profile.d/conda.sh
             export PATH="$HOME/miniconda/bin:$PATH"
-            conda create -n build-env python=3.9 -y
+            conda create -n build-env python=3.9 conda-build -y
             conda activate build-env
       - run:
           name: Build Stim Package
