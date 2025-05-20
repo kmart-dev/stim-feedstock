@@ -3,19 +3,22 @@ version: 2.1
 jobs:
   build:
     docker:
-      - image: circleci/python:3.9  # Use Python image (or adjust for your package)
+      - image: circleci/python:3.9
     steps:
       - checkout
       - run:
           name: Install Conda & Dependencies
           command: |
             sudo apt update
-            sudo apt install -y libboost-all-dev  # Adjust dependencies as needed
-            curl -L https://github.com/conda/conda/releases/latest/download/conda.sh | bash
+            sudo apt install -y libboost-all-dev
+            wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
+            bash miniconda.sh -b -p $HOME/miniconda
+            export PATH="$HOME/miniconda/bin:$PATH"
       - run:
           name: Set Up Conda Environment
           command: |
-            conda create -n build-env python=3.9
+            source $HOME/miniconda/etc/profile.d/conda.sh
+            conda create -n build-env python=3.9 -y
             conda activate build-env
       - run:
           name: Build Stim Package
