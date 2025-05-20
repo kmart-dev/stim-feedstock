@@ -1,25 +1,29 @@
-# This file was generated automatically from conda-smithy. To update this configuration,
-# update the conda-forge.yml and/or the recipe/meta.yaml.
-# -*- mode: jinja-yaml -*-
-
-version: 2
+version: 2.1
 
 jobs:
   build:
-    working_directory: ~/test
-    machine:
-      image: ubuntu-2004:current
+    docker:
+      - image: circleci/python:3.9  # Use Python image (or adjust for your package)
     steps:
+      - checkout
       - run:
-          # The Circle-CI build should not be active, but if this is not true for some reason, do a fast finish.
-          command: exit 0
+          name: Install Conda & Dependencies
+          command: |
+            sudo apt update
+            sudo apt install -y libboost-all-dev  # Adjust dependencies as needed
+            curl -L https://github.com/conda/conda/releases/latest/download/conda.sh | bash
+      - run:
+          name: Set Up Conda Environment
+          command: |
+            conda create -n build-env python=3.9
+            conda activate build-env
+      - run:
+          name: Build Stim Package
+          command: conda build recipe/
 
 workflows:
   version: 2
   build_and_test:
     jobs:
-      - build:
-          filters:
-            branches:
-              ignore:
-                - /.*/
+      - build
+
