@@ -14,9 +14,13 @@ jobs:
             wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
             bash miniconda.sh -b -p $HOME/miniconda
             export PATH="$HOME/miniconda/bin:$PATH"
+            source $HOME/miniconda/etc/profile.d/conda.sh
       - run:
           name: Verify Conda Installation
-          command: conda --version
+          command: |
+            echo "PATH: $PATH"
+            conda --version
+            which conda
       - run:
           name: Set Up Conda Environment
           command: |
