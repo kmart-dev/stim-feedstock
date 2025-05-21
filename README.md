@@ -1,2 +1,2 @@
 # stim-feedstock
-stim feedstock
+stim feedstock repo
