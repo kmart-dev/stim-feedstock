@@ -1,70 +1,42 @@
-version: 2.1
+# This file was generated automatically from conda-smithy. To update this configuration,
+# update the conda-forge.yml and/or the recipe/meta.yaml.
+# -*- mode: jinja-yaml -*-
+
+version: 2
 
 jobs:
-  build:
-    docker:
-      - image: cimg/python:3.10  # Using Python 3.10 to match Conda recipe requirements
+  build_linux_64_python3.10.____cpython:
+    working_directory: ~/test
+    machine:
+      - image: ubuntu-2004:current
+    environment:
+      - CONFIG: "linux_64_python3.10.____cpython"
+      - UPLOAD_PACKAGES: "True"
+        DOCKER_IMAGE: "quay.io/condaforge/linux-anvil-x86_64:alma9"
     steps:
       - checkout
-
       - run:
-          name: Install Conda & Dependencies
+          name: Fast finish outdated PRs and merge PRs
           command: |
-            sudo apt update
-            sudo apt install -y libboost-all-dev
-            wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
-            bash miniconda.sh -b -p $HOME/miniconda
-            #echo 'export PATH="$HOME/miniconda/bin:$PATH"' >> ~/.bashrc
-            #source ~/.bashrc
-            #echo "PATH after Miniconda install: $PATH"
-            export PATH="HOME/miniconda/bin:$PATH"
-            source "$HOME/miniconda/etc/profile.d/conda.sh"
-            conda config --add channels conda-forge
-            conda config --set channel_priority strict
-
+            ./.circleci/fast_finish_ci_pr_build.sh
+            ./.circleci/checkout_merge_commit.sh
       - run:
-          name: Verify Conda Installation
+          # Run, test and (if we have a BINSTAR_TOKEN) upload the distributions.
           command: |
-            source $HOME/miniconda/etc/profile.d/conda.sh
-            export PATH="$HOME/miniconda/bin:$PATH"
-            echo "PATH: $PATH"
-            conda --version
-            which conda
-            conda info
-
-      - run:
-          name: Create & Activate Conda Environment
-          command: |
-            source $HOME/miniconda/etc/profile.d/conda.sh
-            conda create --name build_env python=3.10 -y
-            echo "Available environments:"
-            conda info --envs
-            conda activate build_env
-            echo "Python version inside Conda environment:"
-            python --version
-            which python
-
-      - run:
-          name: Install `conda-build`
-          command: |
-            source $HOME/miniconda/etc/profile.d/conda.sh
-            conda activate build_env
-            conda install -c conda-forge conda-build -y
-            conda info --envs  # Verify environment setup
-            conda list | grep conda-build  # Confirm conda-build installation
-
-      - run:
-          name: Build Stim Package
-          command: |
-            source $HOME/miniconda/etc/profile.d/conda.sh
-            conda activate build_env
-            conda build recipe/
-            echo "Checking Conda output directory:"
-            ls -lh $(conda info --base)/conda-bld/ || true
+            export CI=circle
+            export flow_run_id="circle_$CIRCLE_WORKFLOW_ID"
+            export remote_url="$CIRCLE_REPOSITORY_URL"
+            export sha="$CIRCLE_SHA1"
+            export FEEDSTOCK_NAME=$(basename ${CIRCLE_PROJECT_REPONAME})
+            if [[ "${CIRCLE_PR_NUMBER:-}" == "" ]]; then
+              export IS_PR_BUILD="False"
+            else
+              export IS_PR_BUILD="True"
+            fi
+            ./.scripts/run_docker_build.sh
 
 workflows:
   version: 2
   build_and_test:
     jobs:
-      - build
-
+      - build_linux_64_python3.10.____cpython
