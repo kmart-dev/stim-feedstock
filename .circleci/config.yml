@@ -3,7 +3,7 @@ version: 2.1
 jobs:
   build:
     docker:
-      - image: circleci/python:3.10  # Using Python 3.10 to match Conda recipe requirements
+      - image: cimg/python:3.10  # Using Python 3.10 to match Conda recipe requirements
     steps:
       - checkout
 
@@ -17,6 +17,8 @@ jobs:
             echo 'export PATH="$HOME/miniconda/bin:$PATH"' >> ~/.bashrc
             source ~/.bashrc
             echo "PATH after Miniconda install: $PATH"
+            conda config --add channels conda-forge
+            conda config --set channel_priority strict
 
       - run:
           name: Verify Conda Installation
