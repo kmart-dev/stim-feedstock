@@ -20,6 +20,7 @@ requirements:
     - python 
     - pip
     - pybind11
+    - conda-verify
     - {{ compiler('cxx') }}
   run:
     #- python >=3.10,<3.12
@@ -27,6 +28,7 @@ requirements:
     - python_abi 3.10.* *_cp310
     - pybind11
     - numpy
+    - conda-verify
 
 test:
   imports:
