@@ -1,6 +1,6 @@
 provider:
   linux: circle  # Use CircleCI for Linux builds (if necessary; GitHub Actions is preferred now)
-  win: circle     # Use Cirun for Windows builds (you must opt into this manually)
+  win: cirun     # Use Cirun for Windows builds (you must opt into this manually)
 
 build_platform:
   linux_64: linux_64
@@ -23,6 +23,3 @@ skip_render:
   - .github/CONTRIBUTING.md
   - .github/ISSUE_TEMPLATE.md
   - .github/PULL_REQUEST_TEMPLATE.md
-  - .ci_support/osx_64_python3.10.____cpython.yaml
-  - .azure-pipelines/azure-pipelines-osx.yml
-
