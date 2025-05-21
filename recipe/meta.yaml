@@ -32,6 +32,12 @@ test:
   imports:
     - stim
 
+source-files:
+    - test.py
+
+commands:
+    - python test.py
+
 about:
   home: https://github.com/quantumlib/stim
   license: Apache-2.0
