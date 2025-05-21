@@ -60,7 +60,7 @@ jobs:
             conda activate build_env
             conda build recipe/
             echo "Checking Conda output directory:"
-            ls -lh $HOME/miniconda/conda-bld/
+            ls -lh $(conda info --base)/conda-bld/ || true
 
 workflows:
   version: 2
