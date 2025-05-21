@@ -13,6 +13,7 @@ build:
   number: 0
   script: "{{ PYTHON }} -m pip install . --no-deps --ignore-installed --no-build-isolation --ignore-installed"
   skip: true # [py<310 or py>310]
+  skip: true # [osx]
 
 requirements:
   host:
