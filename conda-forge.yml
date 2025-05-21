@@ -11,8 +11,8 @@ build_platform:
 
 #test_on_native_only: true
 
-matrix:
-  - python: 3.10
+#matrix:
+#  - python: 3.10
 
 clone_depth: 0
 recipe_dir: recipe
