@@ -35,8 +35,6 @@ outputs:
         - python
         - python_abi 3.10.* *_cp310
         - pybind11
-        - numpy
-        - conda-verify
     test:
       imports:
         - stim
@@ -44,63 +42,35 @@ outputs:
         - test.py
       commands:
         - python test.py
+      requires: 
+        - pytest
+        - numpy
     about:
       home: https://github.com/quantumlib/stim
       license: Apache-2.0
       summary: "A fast simulator for quantum stabilizer circuits."
 
-  - name: sinter
-    build:
-      script: ./build-stim.sh
-      skip: true  # [py<310 or py>310 or osx]
-    requirements:
-      host:
-        - python
-        - pip
-        - pybind11
-        - conda-verify
-        - {{ compiler('cxx') }}
-      run:
-        - python
-        - python_abi 3.10.* *_cp310
-        - pybind11
-        - numpy
-        - stim
-        - conda-verify
-    test:
-      imports:
-        - sinter
-    about:
-      home: https://github.com/quantumlib/stim
-      license: Apache-2.0
-      summary: "Benchmarking utility for stim, written in Python."
-
   - name: stimcirq
     build:
-      script: ./build-stim.sh
+      script: "python -m pip install ./glue/cirq --no-deps --ignore-installed --no-build-isolation --ignore-installed"
       skip: true  # [py<310 or py>310 or osx]
     requirements:
       host:
         - python
         - pip
-        - pybind11
-        - conda-verify
-        - {{ compiler('cxx') }}
       run:
         - python
         - python_abi 3.10.* *_cp310
-        - pybind11
-        - numpy
-        - stim
-        - conda-verify
-        - cirq-core  # Adjust if pip install uses a different cirq name
+        - stim # depends on main stim package
+        - cirq
     test:
       imports:
         - stimcirq
-    about:
+
+about:
       home: https://github.com/quantumlib/stim
       license: Apache-2.0
-      summary: "Cirq integration package for stim."
+      summary: "Benchmarking utility for stim, written in Python."
 
 extra:
   recipe-maintainers:
