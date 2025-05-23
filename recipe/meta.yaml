@@ -30,12 +30,15 @@ outputs:
         - python 
         - pip
         - pybind11
+        - numpy
         - conda-verify
         - {{ compiler('cxx') }}
       run:
         - python
         - python_abi 3.10.* *_cp310
         - pybind11
+        - numpy
+        - {{ pin_compatible('numpy') }}
     test:
       imports:
         - stim
@@ -45,7 +48,6 @@ outputs:
         - python test.py
       requires: 
         - pytest
-        - numpy
 
   - name: stimcirq
     build:
