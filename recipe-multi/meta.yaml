@@ -1,7 +1,8 @@
+{% set name = "stim" %}
 {% set version = "1.15.0" %}
 
 package:
-  name: stim-meta
+  name: {{ name|lower }}
   version: {{ version }}
 
 source:
@@ -26,7 +27,7 @@ outputs:
         - '*/ld-linux-x86-64.so.2'
     requirements:
       host:
-        - python
+        - python 
         - pip
         - pybind11
         - conda-verify
@@ -45,10 +46,6 @@ outputs:
       requires: 
         - pytest
         - numpy
-    about:
-      home: https://github.com/quantumlib/stim
-      license: Apache-2.0
-      summary: "A fast simulator for quantum stabilizer circuits."
 
   - name: stimcirq
     build:
@@ -68,9 +65,9 @@ outputs:
         - stimcirq
 
 about:
-      home: https://github.com/quantumlib/stim
-      license: Apache-2.0
-      summary: "Benchmarking utility for stim, written in Python."
+  home: https://github.com/quantumlib/stim
+  license: Apache-2.0
+  summary: "A fast simulator for quantum stabilizer circuits."
 
 extra:
   recipe-maintainers:
