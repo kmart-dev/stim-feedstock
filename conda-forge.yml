@@ -1,5 +1,5 @@
 provider:
-  linux: circle  # Use CircleCI for Linux builds (if necessary; GitHub Actions is preferred now)
+  linux: azure  # Use CircleCI for Linux builds (if necessary; GitHub Actions is preferred now)
   win: azure     # Use Cirun for Windows builds (you must opt into this manually)
 
 build_platform:
