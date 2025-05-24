@@ -1,6 +1,7 @@
-#provider:
-#  linux: azure  # Use CircleCI for Linux builds (if necessary; GitHub Actions is preferred now)
-#  win: azure     # Use Cirun for Windows builds (you must opt into this manually)
+provider:
+  linux: github_actions
+  win: github_actions
+
 
 build_platform:
   linux_64: linux_64
@@ -18,8 +19,9 @@ recipe_dir: recipe
 github_actions:
   self_hosted: false
 
-azure:
-  enabled: false
+# Don't include this unless you're actively using Azure
+#azure:
+#  enabled: false
 
 skip_render:
   - README.md
