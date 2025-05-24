@@ -41,7 +41,7 @@ outputs:
         - {{ pin_compatible('numpy') }}
     test:
       imports:
-        - quantumlib-stim
+        - quantumlib_stim
       source_files:
         - test.py
       commands:
@@ -64,9 +64,9 @@ outputs:
         - cirq
     test:
       imports:
-        - quantumlib-stimcirq
+        - quantumlib_stimcirq
       commands:
-        - python -c "import stimcirq; print(stimcirq.__doc__)"
+        - python -c "import quantumlib_stimcirq; print(quantumlib_stimcirq.__doc__)"
 
 about:
   home: https://github.com/quantumlib/stim
