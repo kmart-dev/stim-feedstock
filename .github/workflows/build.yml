@@ -1,4 +1,4 @@
-name: Cross-Platform Conda Build
+name: Debug Cross-Platform Conda Build
 
 on:
   push:
@@ -17,6 +17,11 @@ jobs:
       - name: Checkout source
         uses: actions/checkout@v3
 
+      - name: Print matrix variables
+        run: |
+          echo "Matrix OS: ${{ matrix.os }}"
+          echo "Matrix Python: ${{ matrix.python-version }}"
+
       - name: Set up Miniconda
         uses: conda-incubator/setup-miniconda@v2
         with:
@@ -26,19 +31,54 @@ jobs:
           auto-activate-base: false
           auto-update-conda: true
 
+      - name: Print PATH and env
+        run: |
+          echo ">> PATH"
+          echo "$PATH"
+          echo ">> ENV"
+          env
+
+      - name: Verify conda init
+        run: |
+          echo ">> Which conda"
+          which conda
+          echo ">> Conda version"
+          conda --version
+          echo ">> Conda env list"
+          conda env list
+          echo ">> Active environment"
+          conda info --envs
+
+      - name: Show conda config and version info
+        run: |
+          conda config --show
+          conda info
+          echo ">> Python version in PATH"
+          python --version
+          which python
+
+      - name: Check pre-installed packages
+        run: |
+          echo ">> conda list before install"
+          conda list
+
       - name: Configure conda-forge and install build tools
-        shell: bash
         run: |
           conda config --add channels conda-forge
           conda config --set channel_priority strict
           conda install -y numpy=1.22 conda-build boa mamba
+          echo ">> conda list after install"
+          conda list
 
-      - name: Build package
-        shell: bash
+      - name: Build package with mamba
         run: |
+          echo ">> conda build output path"
+          conda build recipe --output
+          echo ">> mambabuild"
           conda mambabuild recipe
 
-      - name: Test package
-        shell: bash
+      - name: Test built package
         run: |
+          echo ">> Testing built package"
           conda build --test $(conda build recipe --output)
+
