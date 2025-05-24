@@ -1,0 +1,39 @@
+name: Windows Build
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build-win-64:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Set up conda
+        uses: conda-incubator/setup-miniconda@v2
+        with:
+          auto-update-conda: true
+          activate-environment: build
+          environment-file: environment.yml
+          python-version: 3.10
+
+      - name: Install dependencies
+        shell: powershell
+        run: |
+          conda install -y conda-build boa
+          conda install -y mamba -c conda-forge
+
+      - name: Build feedstock
+        shell: powershell
+        run: |
+          conda mambabuild recipe
+
+      - name: Test built package
+        shell: powershell
+        run: |
+          conda build --test (conda build recipe --output)
+
