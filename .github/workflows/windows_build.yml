@@ -18,7 +18,6 @@ jobs:
         with:
           auto-update-conda: true
           activate-environment: build
-          environment-file: environment.yml
           python-version: 3.10
 
       - name: Install dependencies
@@ -26,6 +25,7 @@ jobs:
         run: |
           conda install -y conda-build boa
           conda install -y mamba -c conda-forge
+          conda install -y python=3.10 numpy=1.22
 
       - name: Build feedstock
         shell: powershell
