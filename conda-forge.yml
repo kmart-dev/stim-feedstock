@@ -5,12 +5,11 @@ provider:
 build_platform:
   linux_64: linux_64
 
-test_on_native_only: true
-
 clone_depth: 0
 recipe_dir: recipe
 
-build_with_mamba: true
+# Don't use build_with_mambar, because not supported in conda-forge.yml
+# build_with_mamba: true
 
 skip_render:
   - README.md

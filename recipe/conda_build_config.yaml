@@ -1,4 +1,15 @@
 python:
   - 3.10
+
 numpy:
   - 1.22
+
+python_impl:
+  - cpython
+
+is_python_min:
+  - true
+
+zip_keys:
+  - [python, numpy, python_impl, is_python_min]
+
