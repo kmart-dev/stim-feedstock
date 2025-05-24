@@ -7,10 +7,6 @@ build_platform:
 
 test_on_native_only: true
 
-variants:
-  - python: 3.10
-    numpy: 1.22
-
 clone_depth: 0
 recipe_dir: recipe
 
