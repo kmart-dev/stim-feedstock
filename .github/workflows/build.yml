@@ -1,0 +1,67 @@
+name: Cross-Platform Conda Build
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    name: Build (${{ matrix.os }}, Python ${{ matrix.python-version }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python-version: [3.10]
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v3
+
+      # Manual Miniconda install per platform
+      - name: Install Miniconda (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          curl -L -o miniconda.sh https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
+          bash miniconda.sh -b -p $HOME/miniconda
+          echo "$HOME/miniconda/bin" >> $GITHUB_PATH
+
+      - name: Install Miniconda (macOS)
+        if: matrix.os == 'macos-latest'
+        run: |
+          curl -L -o miniconda.sh https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-x86_64.sh
+          bash miniconda.sh -b -p $HOME/miniconda
+          echo "$HOME/miniconda/bin" >> $GITHUB_PATH
+
+      - name: Install Miniconda (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: powershell
+        run: |
+          Invoke-WebRequest https://repo.anaconda.com/miniconda/Miniconda3-latest-Windows-x86_64.exe -OutFile miniconda.exe
+          Start-Process -Wait -FilePath .\miniconda.exe -ArgumentList "/InstallationType=JustMe", "/AddToPath=1", "/RegisterPython=0", "/S", "/D=$env:USERPROFILE\miniconda3"
+          echo "$env:USERPROFILE\miniconda3\Scripts" | Out-File -Append -Encoding ASCII $env:GITHUB_PATH
+
+      # Create build env and install deps
+      - name: Setup Conda Environment
+        shell: bash
+        run: |
+          source $HOME/miniconda/etc/profile.d/conda.sh || true
+          conda create -y -n build python=${{ matrix.python-version }}
+          conda activate build
+          conda config --add channels conda-forge
+          conda config --set channel_priority strict
+          conda install -y numpy=1.22 conda-build boa mamba
+
+      - name: Build Package
+        shell: bash
+        run: |
+          source $HOME/miniconda/etc/profile.d/conda.sh || true
+          conda activate build
+          conda mambabuild recipe
+
+      - name: Test Package
+        shell: bash
+        run: |
+          source $HOME/miniconda/etc/profile.d/conda.sh || true
+          conda activate build
+          conda build --test $(conda build recipe --output)
+
