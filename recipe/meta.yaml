@@ -8,7 +8,7 @@ package:
 source:
   - url: https://github.com/quantumlib/Stim/archive/refs/tags/v{{ version }}.tar.gz
     sha256: 3d606e8ae61bc8a3b40af2aa5ee88a2d4793c38d0d89472195fff069792e5233
-  - path: ./build-quantumlib-stim.sh
+  - path: ./build-quantumlib-stim.py
   - path: ./test.py
 
 build:
