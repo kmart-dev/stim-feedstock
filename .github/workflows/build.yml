@@ -42,10 +42,3 @@ jobs:
         shell: bash
         run: |
           conda build --test $(conda build recipe --output)
-B
-B
-B
-B
-B
-B
-
