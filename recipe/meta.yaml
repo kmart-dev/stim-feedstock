@@ -65,8 +65,8 @@ outputs:
     test:
       imports:
         - quantumlib_stimcirq
-      commands:
-        - python -c "import quantumlib_stimcirq; print(quantumlib_stimcirq.__doc__)"
+#      commands:
+#        - python -c "import quantumlib_stimcirq; print(quantumlib_stimcirq.__doc__)"
 
 about:
   home: https://github.com/quantumlib/stim
