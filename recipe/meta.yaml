@@ -1,4 +1,4 @@
-{% set name = "stim" %}
+{% set name = "quantumlib-stim" %}
 {% set version = "1.15.0" %}
 
 package:
@@ -16,9 +16,9 @@ build:
 
 outputs:
 
-  - name: stim
+  - name: quantumlib-stim
     build:
-      script: ./build-stim.sh
+      script: ./build-quantumlib-stim.sh
       skip: true  # [py<310 or py>310 or osx]
       missing_dso_whitelist:
         - '*/libm.so.6'
@@ -41,7 +41,7 @@ outputs:
         - {{ pin_compatible('numpy') }}
     test:
       imports:
-        - stim
+        - quantumlib-stim
       source_files:
         - test.py
       commands:
@@ -49,7 +49,7 @@ outputs:
       requires: 
         - pytest
 
-  - name: stimcirq
+  - name: quantumlib-stimcirq
     build:
       script: "python -m pip install ./glue/cirq --no-deps --ignore-installed --no-build-isolation --ignore-installed"
       skip: true  # [py<310 or py>310 or osx]
@@ -60,11 +60,13 @@ outputs:
       run:
         - python
         - python_abi 3.10.* *_cp310
-        - stim # depends on main stim package
+        - quantumlib-stim # depends on main stim package
         - cirq
     test:
       imports:
-        - stimcirq
+        - quantumlib-stimcirq
+      commands:
+        - python -c "import stimcirq; print(stimcirq.__doc__)"
 
 about:
   home: https://github.com/quantumlib/stim
