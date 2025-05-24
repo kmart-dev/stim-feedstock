@@ -7,33 +7,37 @@ on:
 jobs:
   build-win-64:
     runs-on: windows-latest
+    strategy:
+      matrix:
+        python-version: [3.10]
 
     steps:
-      - uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
+      - name: Checkout
+        uses: actions/checkout@v3
 
-      - name: Set up conda
-        uses: conda-incubator/setup-miniconda@v2
-        with:
-          auto-update-conda: true
-          activate-environment: build
-          python-version: 3.10
-
-      - name: Install dependencies
+      - name: Install Miniconda manually
         shell: powershell
         run: |
-          conda install -y conda-build boa
-          conda install -y mamba -c conda-forge
-          conda install -y python=3.10 numpy=1.22
+          Invoke-WebRequest https://repo.anaconda.com/miniconda/Miniconda3-latest-Windows-x86_64.exe -OutFile miniconda.exe
+          Start-Process -Wait -FilePath .\miniconda.exe -ArgumentList "/InstallationType=JustMe", "/AddToPath=1", "/RegisterPython=0", "/S", "/D=$env:USERPROFILE\miniconda3"
+          echo "$env:USERPROFILE\miniconda3\Scripts" | Out-File -Append -Encoding ASCII $env:GITHUB_PATH
 
-      - name: Build feedstock
+      - name: Setup environment
         shell: powershell
         run: |
+          & "$env:USERPROFILE\miniconda3\Scripts\conda.exe" create -y -n build python=${{ matrix.python-version }}
+          & "$env:USERPROFILE\miniconda3\Scripts\activate" build
+          & "$env:USERPROFILE\miniconda3\Scripts\conda.exe" install -y numpy=1.22 conda-build boa mamba -c conda-forge
+
+      - name: Build
+        shell: powershell
+        run: |
+          & "$env:USERPROFILE\miniconda3\Scripts\activate" build
           conda mambabuild recipe
 
-      - name: Test built package
+      - name: Test
         shell: powershell
         run: |
+          & "$env:USERPROFILE\miniconda3\Scripts\activate" build
           conda build --test (conda build recipe --output)
 
