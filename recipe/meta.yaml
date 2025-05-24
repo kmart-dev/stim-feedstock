@@ -18,7 +18,7 @@ outputs:
 
   - name: quantumlib-stim
     build:
-      script: ./build-quantumlib-stim.sh
+      script: ./build-quantumlib-stim.py
       skip: true  # [py<310 or py>310 or osx]
       missing_dso_whitelist:
         - '*/libm.so.6'
