@@ -1,12 +1,6 @@
 # Recipe-specific conda build configuration for quantumlib-stim
 # This overrides or extends the global configuration
 
-# Specific build requirements for stim (C++ intensive package)
-cxx_compiler_version:
-  - 9     # [linux]
-  - 11    # [osx]
-  - 14.2  # [win]
-
 # Stim-specific build flags
 build_string_pattern: "h{PKG_HASH}_{PKG_BUILDNUM}"
 
