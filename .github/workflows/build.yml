@@ -99,9 +99,9 @@ jobs:
           conda config --add channels defaults
           # Set channel priority to flexible for better dependency resolution
           conda config --set channel_priority flexible
-          # Install necessary packages using mamba for speed (if mamba is available)
-          # 'mamba' package for the mamba executable.
-          mamba install -y numpy=1.22 conda-build boa mamba
+          # Use 'conda install' to install all necessary packages, including conda-build and mamba.
+          # This resolves the "mamba not found" issue and ensures conda-build is installed.
+          conda install -y numpy=1.22 conda-build boa mamba
           echo "--- DEBUG: conda list after package installation ---"
           conda list
 
@@ -123,7 +123,10 @@ jobs:
           BUILD_OUTPUT_PATH=$(conda build recipe --output)
           echo "Build output path: $BUILD_OUTPUT_PATH"
           echo ">> Running mambabuild"
-          mamba mambabuild recipe # Use mamba's build command for speed
+          # Now that mamba is installed, this command should work.
+          # If you truly don't care about mamba, you could change this to `conda build recipe`
+          # but `mambabuild` is often faster.
+          mamba mambabuild recipe
 
       - name: Test built package
         run: |
