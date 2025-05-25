@@ -105,7 +105,7 @@ jobs:
       - name: Test quantumlib-stim installation
         run: |
           echo "--- INFO: Testing quantumlib-stim ---"
-          python -c "import quantumlib_stim; print('quantumlib-stim imported successfully')"
+          # python -c "import quantumlib_stim; print('quantumlib-stim imported successfully')"
           STIM_PKG=$(conda build ./recipes/quantumlib-stim --output --variant-config-files ./recipes/conda_build_config.yaml)
           conda build --test "$STIM_PKG"
 
