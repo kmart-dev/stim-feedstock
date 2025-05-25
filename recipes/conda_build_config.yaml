@@ -15,8 +15,8 @@ pin_compatible:
 
 # C++ compiler configuration
 cxx_compiler:
-  - gxx        # [linux or osx]
-#  - clangxx    # [osx]
+  - gxx        # [linux]
+  - clangxx    # [osx]
   - vs2019     # [win]
 
 # Build number increment (can be overridden per recipe)
