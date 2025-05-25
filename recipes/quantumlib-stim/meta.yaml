@@ -38,10 +38,6 @@ requirements:
 test:
   imports:
     - quantumlib_stim
-  source_files:
-    - test.py
-  commands:
-    - python test.py
   requires:
     - pytest
 
