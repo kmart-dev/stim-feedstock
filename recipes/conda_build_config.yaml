@@ -15,8 +15,8 @@ pin_compatible:
 
 # C++ compiler configuration
 cxx_compiler:
-  - gxx        # [linux]
-  - clangxx    # [osx]
+  - gxx        # [linux or osx]
+#  - clangxx    # [osx]
   - vs2019     # [win]
 
 # Build number increment (can be overridden per recipe)
@@ -30,10 +30,10 @@ channel_sources:
 
 # Target platforms
 target_platform:
-  - linux-64
-  - osx-64
+  - linux-64 # [linux]
+  - osx-64   # [osx]
 #  - osx-arm64
-  - win-64
+  - win-64   # [win]
 
 # Skip patterns (can be overridden in individual recipes)
 # For example, if you want to skip certain Python versions globally

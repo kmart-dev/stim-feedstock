@@ -4,11 +4,11 @@ provider:
   osx: github_actions
 
 build_platform:
-  linux_64: linux_64
+  linux_64: linux_64 # [linux]
 #  linux_aarch64: linux_aarch64
-#  osx_64: osx_64
+  osx_64: osx_64     # [osx]
 #  osx_arm64: osx_arm64
-#  win_64: win_64
+  win_64: win_64     # [win]
 
 clone_depth: 0
 recipe_dir: recipe
