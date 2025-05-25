@@ -39,7 +39,11 @@ jobs:
       - name: Install macOS build tools
         if: runner.os == 'macOS'
         run: |
+          echo "--- INFO: Ensuring Xcode CLI tools are installed ---"
           xcode-select --install || echo "Xcode CLI tools already installed"
+          echo "--- INFO Using clang instead of gxx_osx-64 ---"
+          export CC=clang
+          export CXX=clang++
       
       # --- Conda Setup ---
       - name: Set up Miniconda environment
@@ -66,6 +70,8 @@ jobs:
       - name: Build quantumlib-stim package
         run: |
           echo "--- INFO: Building quantumlib-stim ---"
+          export CC=${CC:-clang}
+          export CXX=${CXX:-clang++}
           # Use the global conda_build_config.yaml from recipes/ directory
           mamba mambabuild ./recipes/quantumlib-stim --variant-config-files ./recipes/conda_build_config.yaml
       
