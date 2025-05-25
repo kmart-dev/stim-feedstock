@@ -63,8 +63,11 @@ outputs:
         - quantumlib-stim # depends on main stim package
         - cirq
     test:
+      commands:
+        - ls -l $SP_DIR # List site-packages contents
       imports:
-        - quantumlib_stimcirq
+        - stimcirq
+#       - quantumlib_stimcirq
 #      commands:
 #        - python -c "import quantumlib_stimcirq; print(quantumlib_stimcirq.__doc__)"
 
