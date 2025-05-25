@@ -45,7 +45,7 @@ jobs:
 
       # --- Conda Setup ---
       - name: Set up Miniconda environment
-        uses: conda-incubator/setup-miniconda@v3
+        uses: conda-incubator/setup-miniconda@v4
         with:
           python-version: ${{ matrix.python-version }}
           miniconda-version: "latest"
