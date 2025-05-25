@@ -54,6 +54,21 @@ jobs:
           auto-update-conda: true
           conda-init-shell: bash
 
+      - name: Ensure Conda is in PATH and environment is activated
+        run: |
+          echo "Adding conda to PATH and activating environment"
+          if [[ -d "$HOME/miniconda3/bin" ]]; then
+            export PATH="$HOME/miniconda3/bin:$PATH"
+          elif [[ -d "/Users/runner/miniconda3/bin" ]]; then
+            export PATH="/Users/runner/miniconda3/bin:$PATH"
+          fi
+          source "$(conda info --base)/etc/profile.d/conda.sh"
+          conda activate build
+          which conda
+          conda --version
+          which python
+          python --version
+
       # --- Debugging Steps ---
       - name: Debug - Print PATH and all environment variables
         run: |
