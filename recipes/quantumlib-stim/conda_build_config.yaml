@@ -18,9 +18,14 @@ skip:
 
 # Stim requires specific numpy version for C++ bindings
 numpy:
-  - "1.22"
+  - "1.22.*"
 
 # Test requirements specific to stim
 test_requires:
   - pytest
   - pytest-xdist
+  - numpy
+
+# Define preferred channels
+#channels:
+#  - conda-forge
