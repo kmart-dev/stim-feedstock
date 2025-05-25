@@ -3,34 +3,27 @@ name: Debug Cross-Platform Conda Build
 on:
   push:
     branches:
-      - main # Trigger on pushes to the main branch
-      - '**' # Trigger on pushes to any branch (useful for debugging)
-  pull_request: # Trigger on pull requests
+      - main
+      - '**'
+  pull_request:
 
 jobs:
   build:
     name: Build (${{ matrix.os }}, Python ${{ matrix.python-version }})
     runs-on: ${{ matrix.os }}
     strategy:
-      fail-fast: false # Do not cancel other matrix jobs if one fails; allows full debugging output
+      fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-        # Explicitly define the Python versions you want to test.
-        # Now set to only build with Python 3.10 as requested.
-        python-version: ["3.10"] # Only build for Python 3.10
+        python-version: ["3.10"]
 
-    # IMPORTANT: This defaults block ensures all 'run' steps use a login shell
-    # which correctly picks up the conda initialization.
     defaults:
       run:
-        # For Linux/macOS, use bash in login mode.
-        # For Windows, GitHub Actions' default PowerShell usually handles this correctly,
-        # but you can specify 'powershell' if needed for explicit control.
         shell: bash -l {0}
 
     steps:
       - name: Checkout source code
-        uses: actions/checkout@v4 # Use the latest stable version of the checkout action
+        uses: actions/checkout@v4
 
       - name: Print matrix variables for verification
         run: |
@@ -38,28 +31,36 @@ jobs:
           echo "Matrix OS: ${{ matrix.os }}"
           echo "Matrix Python: ${{ matrix.python-version }}"
 
+      # --- OS-Specific Build Tools ---
+      - name: Install Windows build tools
+        if: runner.os == 'Windows'
+        run: |
+          choco install visualstudio2019buildtools --version=16.11.10 -y
+          choco install visualstudio2019-workload-vctools -y
+
+      - name: Install macOS build tools
+        if: runner.os == 'macOS'
+        run: |
+          xcode-select --install || echo "Xcode CLI tools already installed"
+
+      # --- Conda Setup ---
       - name: Set up Miniconda environment
-        # Use v3 of setup-miniconda for the latest features and bug fixes.
-        # It has improved shell initialization and robustness.
         uses: conda-incubator/setup-miniconda@v3
         with:
-          python-version: ${{ matrix.python-version }} # This should now only inject 3.10
-          miniconda-version: "latest" # Always get the most recent Miniconda installer
-          activate-environment: build # This tells setup-miniconda to create and activate an environment named 'build'
-          auto-activate-base: false # Prevent automatic activation of the base environment
-          auto-update-conda: true # Ensure conda is up-to-date within the Miniconda installation
-          # `conda-init-shell` is still good practice, but `defaults.run.shell` is more critical
-          # for ensuring subsequent steps use the initialized shell.
-          conda-init-shell: bash # Explicitly initialize for bash shells on Linux/macOS
+          python-version: ${{ matrix.python-version }}
+          miniconda-version: "latest"
+          activate-environment: build
+          auto-activate-base: false
+          auto-update-conda: true
+          conda-init-shell: bash
 
-      # --- Extensive Debugging Steps ---
-
+      # --- Debugging Steps ---
       - name: Debug - Print PATH and all environment variables
         run: |
           echo "--- DEBUG: Current PATH ---"
           echo "$PATH"
           echo "--- DEBUG: All Environment Variables ---"
-          env | sort # Sort for easier readability
+          env | sort
 
       - name: Debug - Verify Conda and Python installation
         run: |
@@ -89,18 +90,12 @@ jobs:
           conda list
 
       # --- Conda Configuration and Package Installation ---
-
       - name: Configure conda-forge channel and install build tools
         run: |
           echo "--- INFO: Configuring conda channels and installing build tools ---"
-          # Add conda-forge channel with highest priority
           conda config --add channels conda-forge
-          # Add defaults channel (often implicitly included, but explicit doesn't hurt)
           conda config --add channels defaults
-          # Set channel priority to flexible for better dependency resolution
           conda config --set channel_priority flexible
-          # Use 'conda install' to install all necessary packages, including conda-build and mamba.
-          # This resolves the "mamba not found" issue and ensures conda-build is installed.
           conda install -y numpy=1.22 conda-build boa mamba
           echo "--- DEBUG: conda list after package installation ---"
           conda list
@@ -113,27 +108,31 @@ jobs:
           boa --version || echo "boa check failed."
           mamba --version || echo "mamba check failed."
 
-      # --- Build and Test Steps ---
-
-      - name: Build package with mamba
+      # --- Build and Install quantumlib-stim (required for quantumlib-stimcirq) ---
+      - name: Build quantumlib-stim package
         run: |
-          echo "--- INFO: Building package with mamba ---"
-          echo ">> Determining conda build output path"
-          # Capture the output path for consistent use
-          BUILD_OUTPUT_PATH=$(conda build recipe --output)
-          echo "Build output path: $BUILD_OUTPUT_PATH"
-          echo ">> Running mambabuild"
-          # Now that mamba is installed, this command should work.
-          # If you truly don't care about mamba, you could change this to `conda build recipe`
-          # but `mambabuild` is often faster.
-          mamba mambabuild ./recipe
+          echo "--- INFO: Building quantumlib-stim ---"
+          mamba mambabuild ./recipe --output-id quantumlib-stim
+          # Install the built stim package into the current env so it's available for cirq
+          STIM_BLD_PATH=$(conda build recipe --output --output-id quantumlib-stim)
+          echo "Installing stim from: $STIM_BLD_PATH"
+          conda install -y "$STIM_BLD_PATH"
 
-      - name: Test built package
+      # --- Build and Install quantumlib-stimcirq (after stim is installed) ---
+      - name: Build quantumlib-stimcirq package
         run: |
-          echo "--- INFO: Testing built package ---"
-          # Retrieve the build output path again or pass it from the previous step if preferred
-          TEST_PACKAGE_PATH=$(conda build recipe --output)
-          echo "Testing package at: $TEST_PACKAGE_PATH"
-          conda build --test "$TEST_PACKAGE_PATH" # Use quotes for paths with spaces
+          echo "--- INFO: Building quantumlib-stimcirq ---"
+          mamba mambabuild ./recipe --output-id quantumlib-stimcirq
+          STIMCIRQ_BLD_PATH=$(conda build recipe --output --output-id quantumlib-stimcirq)
+          echo "Installing stimcirq from: $STIMCIRQ_BLD_PATH"
+          conda install -y "$STIMCIRQ_BLD_PATH"
+
+      # --- Test built packages ---
+      - name: Test built packages
+        run: |
+          echo "--- INFO: Testing quantumlib-stim ---"
+          conda build --test "$(conda build recipe --output --output-id quantumlib-stim)"
+          echo "--- INFO: Testing quantumlib-stimcirq ---"
+          conda build --test "$(conda build recipe --output --output-id quantumlib-stimcirq)"
 
 
