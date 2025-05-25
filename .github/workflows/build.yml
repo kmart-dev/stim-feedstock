@@ -74,7 +74,8 @@ jobs:
           export CC=${CC:-clang}
           export CXX=${CXX:-clang++}
           # Use the global conda_build_config.yaml from recipes/ directory
-          mamba mambabuild ./recipes/quantumlib-stim --variant-config-files ./recipes/conda_build_config.yaml
+          #mamba mambabuild ./recipes/quantumlib-stim --variant-config-files ./recipes/conda_build_config.yaml
+          conda build ./recipes/quantumlib-stim --variant-config-files ./recipes/conda_build_config.yaml
       
       - name: Install built quantumlib-stim package
         run: |
@@ -96,7 +97,8 @@ jobs:
           echo "--- INFO: Building quantumlib-stimcirq ---"
           # Add the local conda-bld channel so stimcirq can find the locally built stim
           conda config --add channels file://$(conda info --base)/envs/build/conda-bld
-          mamba mambabuild ./recipes/quantumlib-stimcirq --variant-config-files ./recipes/conda_build_config.yaml
+          #mamba mambabuild ./recipes/quantumlib-stimcirq --variant-config-files ./recipes/conda_build_config.yaml
+          conda build ./recipes/quantumlib-stimcirq --variant-config-files ./recipes/conda_build_config.yaml
       
       - name: Install built quantumlib-stimcirq package
         run: |
