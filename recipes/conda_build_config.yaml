@@ -1,0 +1,47 @@
+# Global conda build configuration for all recipes
+# This file defines build variants and pin compatibility
+
+# Python versions to build for
+python:
+  - "3.10"
+
+# NumPy versions and pinning strategy
+numpy:
+  - "1.22"
+
+# Pin compatibility for runtime
+pin_compatible:
+  numpy: x.x
+
+# C++ compiler configuration
+cxx_compiler:
+  - gxx        # [linux]
+  - clangxx    # [osx]
+  - vs2019     # [win]
+
+# Build number increment (can be overridden per recipe)
+build_number_decrement:
+  - 0
+
+# Channel priority and sources
+channel_sources:
+  - conda-forge
+  - defaults
+
+# Target platforms
+target_platform:
+  - linux-64
+  - osx-64
+#  - osx-arm64
+  - win-64
+
+# Skip patterns (can be overridden in individual recipes)
+# For example, if you want to skip certain Python versions globally
+skip:
+  - py<310 or py>310  # Only build for Python 3.10
+
+# ZIP safety for packages
+zip_safe: false
+
+# Build string customization
+build_string_pattern: "py{py}{build_number}_0"

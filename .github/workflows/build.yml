@@ -1,5 +1,4 @@
-name: Debug Cross-Platform Conda Build
-
+name: Build Stim Packages
 on:
   push:
     branches:
@@ -16,33 +15,32 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
         python-version: ["3.10"]
-
     defaults:
       run:
         shell: bash -l {0}
-
+    
     steps:
       - name: Checkout source code
         uses: actions/checkout@v4
-
+      
       - name: Print matrix variables for verification
         run: |
           echo "--- DEBUG: Matrix Variables ---"
           echo "Matrix OS: ${{ matrix.os }}"
           echo "Matrix Python: ${{ matrix.python-version }}"
-
+      
       # --- OS-Specific Build Tools ---
       - name: Install Windows build tools
         if: runner.os == 'Windows'
         run: |
           choco install visualstudio2019buildtools --version=16.11.10 -y
           choco install visualstudio2019-workload-vctools -y
-
+      
       - name: Install macOS build tools
         if: runner.os == 'macOS'
         run: |
           xcode-select --install || echo "Xcode CLI tools already installed"
-
+      
       # --- Conda Setup ---
       - name: Set up Miniconda environment
         uses: conda-incubator/setup-miniconda@v3
@@ -53,104 +51,67 @@ jobs:
           auto-activate-base: false
           auto-update-conda: true
           conda-init-shell: bash
-
-      - name: Ensure Conda is in PATH and environment is activated
-        run: |
-          echo "Adding conda to PATH and activating environment"
-          if [[ -d "$HOME/miniconda3/bin" ]]; then
-            export PATH="$HOME/miniconda3/bin:$PATH"
-          elif [[ -d "/Users/runner/miniconda3/bin" ]]; then
-            export PATH="/Users/runner/miniconda3/bin:$PATH"
-          fi
-          source "$(conda info --base)/etc/profile.d/conda.sh"
-          conda activate build
-          which conda
-          conda --version
-          which python
-          python --version
-
-      # --- Debugging Steps ---
-      - name: Debug - Print PATH and all environment variables
-        run: |
-          echo "--- DEBUG: Current PATH ---"
-          echo "$PATH"
-          echo "--- DEBUG: All Environment Variables ---"
-          env | sort
-
-      - name: Debug - Verify Conda and Python installation
-        run: |
-          echo "--- DEBUG: Which conda executable is found? ---"
-          which conda || echo "Error: 'conda' command not found in PATH."
-          echo "--- DEBUG: Conda version ---"
-          conda --version || echo "Error: 'conda --version' failed."
-          echo "--- DEBUG: List of all Conda environments ---"
-          conda env list || echo "Error: 'conda env list' failed."
-          echo "--- DEBUG: Currently active Conda environment ---"
-          conda info --envs | grep "*" || echo "No active environment indicated by 'conda info --envs'."
-          echo "--- DEBUG: Which python executable is found? ---"
-          which python || echo "Error: 'python' command not found in PATH."
-          echo "--- DEBUG: Python version in current environment ---"
-          python --version || echo "Error: 'python --version' failed."
-
-      - name: Debug - Show Conda configuration and detailed info
-        run: |
-          echo "--- DEBUG: Conda Configuration ---"
-          conda config --show
-          echo "--- DEBUG: Detailed Conda Information ---"
-          conda info
-
-      - name: Debug - Check pre-installed packages in the active environment
-        run: |
-          echo "--- DEBUG: conda list before package installation ---"
-          conda list
-
-      # --- Conda Configuration and Package Installation ---
-      - name: Configure conda-forge channel and install build tools
+      
+      - name: Configure conda channels and install build tools
         run: |
           echo "--- INFO: Configuring conda channels and installing build tools ---"
           conda config --add channels conda-forge
           conda config --add channels defaults
           conda config --set channel_priority flexible
           conda install -y numpy=1.22 conda-build boa mamba
-          echo "--- DEBUG: conda list after package installation ---"
-          conda list
-
-      - name: Debug - Verify installed tools
+          echo "--- DEBUG: Checking conda_build_config.yaml ---"
+          ls -la recipes/conda_build_config.yaml || echo "No global conda_build_config.yaml found"
+      
+      # --- Build quantumlib-stim FIRST (dependency for stimcirq) ---
+      - name: Build quantumlib-stim package
         run: |
-          echo "--- DEBUG: Verifying numpy, conda-build, boa, mamba versions ---"
-          python -c "import numpy; print(f'Numpy version: {numpy.__version__}')" || echo "Numpy check failed."
-          conda build --version || echo "conda-build check failed."
-          boa --version || echo "boa check failed."
-          mamba --version || echo "mamba check failed."
-
-      # --- Build and Install quantumlib-stim (required for quantumlib-stimcirq) ---
-      - name: Build quantumlib-stim package (fast)
-        run: |
-          echo "--- INFO: Building quantumlib-stim with mamba ---"
-          mamba mambabuild ./recipe
-
+          echo "--- INFO: Building quantumlib-stim ---"
+          # Use the global conda_build_config.yaml from recipes/ directory
+          mamba mambabuild ./recipes/quantumlib-stim --variant-config-files ./recipes/conda_build_config.yaml
+      
       - name: Install built quantumlib-stim package
         run: |
-          STIM_BLD_PATH=$(conda build recipe --output --output-id quantumlib-stim)
-          echo "Installing stim from: $STIM_BLD_PATH"
-          conda install -y "$STIM_BLD_PATH"
-
-      # --- Build and Install quantumlib-stimcirq (after stim is installed) ---
-      - name: Build quantumlib-stimcirq package (fast)
-        run: |
-          echo "--- INFO: Building quantumlib-stimcirq with mamba ---"
-          mamba mambabuild ./recipe
-
-      - name: Install built quantumlib-stimcirq package
-        run: |
-          STIMCIRQ_BLD_PATH=$(conda build recipe --output --output-id quantumlib-stimcirq)
-          echo "Installing stimcirq from: $STIMCIRQ_BLD_PATH"
-          conda install -y "$STIMCIRQ_BLD_PATH"
-
-      # --- Test built packages ---
-      - name: Test built packages
+          # Install the locally built stim package
+          STIM_PKG=$(conda build ./recipes/quantumlib-stim --output --variant-config-files ./recipes/conda_build_config.yaml)
+          echo "Installing quantumlib-stim from: $STIM_PKG"
+          conda install -y "$STIM_PKG"
+      
+      - name: Test quantumlib-stim installation
         run: |
           echo "--- INFO: Testing quantumlib-stim ---"
-          conda build --test "$(conda build recipe --output --output-id quantumlib-stim)"
+          python -c "import quantumlib_stim; print('quantumlib-stim imported successfully')"
+          STIM_PKG=$(conda build ./recipes/quantumlib-stim --output --variant-config-files ./recipes/conda_build_config.yaml)
+          conda build --test "$STIM_PKG"
+      
+      # --- Build quantumlib-stimcirq SECOND (depends on stim) ---
+      - name: Build quantumlib-stimcirq package
+        run: |
+          echo "--- INFO: Building quantumlib-stimcirq ---"
+          # Add the local conda-bld channel so stimcirq can find the locally built stim
+          conda config --add channels file://$(conda info --base)/envs/build/conda-bld
+          mamba mambabuild ./recipes/quantumlib-stimcirq --variant-config-files ./recipes/conda_build_config.yaml
+      
+      - name: Install built quantumlib-stimcirq package
+        run: |
+          STIMCIRQ_PKG=$(conda build ./recipes/quantumlib-stimcirq --output --variant-config-files ./recipes/conda_build_config.yaml)
+          echo "Installing quantumlib-stimcirq from: $STIMCIRQ_PKG"
+          conda install -y "$STIMCIRQ_PKG"
+      
+      - name: Test quantumlib-stimcirq installation
+        run: |
           echo "--- INFO: Testing quantumlib-stimcirq ---"
-          conda build --test "$(conda build recipe --output --output-id quantumlib-stimcirq)"
+          python -c "import stimcirq; print('stimcirq imported successfully')"
+          python -c "import quantumlib_stim; import stimcirq; print('Both packages work together')"
+          STIMCIRQ_PKG=$(conda build ./recipes/quantumlib-stimcirq --output --variant-config-files ./recipes/conda_build_config.yaml)
+          conda build --test "$STIMCIRQ_PKG"
+      
+      # --- Final Integration Test ---
+      - name: Final integration test
+        run: |
+          echo "--- INFO: Running final integration test ---"
+          python -c "
+          import quantumlib_stim as stim
+          import stimcirq
+          print(f'Stim version: {stim.__version__}')
+          print('Integration test passed!')
+          "
