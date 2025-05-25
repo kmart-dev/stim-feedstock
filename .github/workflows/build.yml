@@ -126,7 +126,7 @@ jobs:
           # Now that mamba is installed, this command should work.
           # If you truly don't care about mamba, you could change this to `conda build recipe`
           # but `mambabuild` is often faster.
-          mamba mambabuild recipe
+          mamba mambabuild ./recipe
 
       - name: Test built package
         run: |
