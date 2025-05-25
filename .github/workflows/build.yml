@@ -21,33 +21,49 @@ jobs:
     defaults:
       run:
         shell: bash -l {0}
-    
+
     steps:
       - name: Checkout source code
         uses: actions/checkout@v4
-      
+
       - name: Print matrix variables for verification
         run: |
           echo "--- DEBUG: Matrix Variables ---"
           echo "Matrix OS: ${{ matrix.os }}"
           echo "Matrix Python: ${{ matrix.python-version }}"
-      
+
       # --- OS-Specific Build Tools ---
       - name: Install Windows build tools
         if: runner.os == 'Windows'
         run: |
           choco install visualstudio2019buildtools --version=16.11.10 -y
           choco install visualstudio2019-workload-vctools -y
-      
-      - name: Install macOS build tools
+
+      - name: Install specific Xcode version and set macOS SDK
         if: runner.os == 'macOS'
         run: |
-          echo "--- INFO: Ensuring Xcode CLI tools are installed ---"
-          xcode-select --install || echo "Xcode CLI tools already installed"
-          echo "--- INFO Using clang instead of gxx_osx-64 ---"
+          echo "--- INFO: Ensuring Xcode CLI tools and specific Xcode version are installed ---"
+          sudo softwareupdate --install-rosetta --agree-to-license || echo "Rosetta already installed"
+          # Switch to a compatible Xcode version (14.3)
+          sudo xcode-select --switch /Applications/Xcode_14.3.app
+          # Set environment for compatible SDK
+          export SDKROOT=$(xcrun --sdk macosx11.0 --show-sdk-path)
+          export MACOSX_DEPLOYMENT_TARGET=10.9
           export CC=clang
           export CXX=clang++
-      
+          echo "SDKROOT=${SDKROOT}" >> $GITHUB_ENV
+          echo "MACOSX_DEPLOYMENT_TARGET=10.9" >> $GITHUB_ENV
+          echo "CC=clang" >> $GITHUB_ENV
+          echo "CXX=clang++" >> $GITHUB_ENV
+
+      - name: Configure environment flags (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          export CFLAGS="-isysroot $SDKROOT"
+          export LDFLAGS="-isysroot $SDKROOT"
+          echo "CFLAGS=$CFLAGS" >> $GITHUB_ENV
+          echo "LDFLAGS=$LDFLAGS" >> $GITHUB_ENV
+
       # --- Conda Setup ---
       - name: Set up Miniconda environment
         uses: conda-incubator/setup-miniconda@v3
@@ -58,7 +74,7 @@ jobs:
           auto-activate-base: false
           auto-update-conda: true
           conda-init-shell: bash
-      
+
       - name: Configure conda channels and install build tools
         run: |
           echo "--- INFO: Configuring conda channels and installing build tools ---"
@@ -68,7 +84,7 @@ jobs:
           conda install -y numpy=1.22 conda-build boa mamba
           echo "--- DEBUG: Checking conda_build_config.yaml ---"
           ls -la recipes/conda_build_config.yaml || echo "No global conda_build_config.yaml found"
-      
+
       # --- Build quantumlib-stim FIRST (dependency for stimcirq) ---
       - name: Build quantumlib-stim package
         run: |
@@ -78,21 +94,21 @@ jobs:
           # Use the global conda_build_config.yaml from recipes/ directory
           #mamba mambabuild ./recipes/quantumlib-stim --variant-config-files ./recipes/conda_build_config.yaml
           conda build ./recipes/quantumlib-stim --variant-config-files ./recipes/conda_build_config.yaml
-      
+
       - name: Install built quantumlib-stim package
         run: |
           # Install the locally built stim package
           STIM_PKG=$(conda build ./recipes/quantumlib-stim --output --variant-config-files ./recipes/conda_build_config.yaml)
           echo "Installing quantumlib-stim from: $STIM_PKG"
           conda install -y "$STIM_PKG"
-      
+
       - name: Test quantumlib-stim installation
         run: |
           echo "--- INFO: Testing quantumlib-stim ---"
           python -c "import quantumlib_stim; print('quantumlib-stim imported successfully')"
           STIM_PKG=$(conda build ./recipes/quantumlib-stim --output --variant-config-files ./recipes/conda_build_config.yaml)
           conda build --test "$STIM_PKG"
-      
+
       # --- Build quantumlib-stimcirq SECOND (depends on stim) ---
       - name: Build quantumlib-stimcirq package
         run: |
@@ -101,13 +117,13 @@ jobs:
           conda config --add channels file://$(conda info --base)/envs/build/conda-bld
           #mamba mambabuild ./recipes/quantumlib-stimcirq --variant-config-files ./recipes/conda_build_config.yaml
           conda build ./recipes/quantumlib-stimcirq --variant-config-files ./recipes/conda_build_config.yaml
-      
+
       - name: Install built quantumlib-stimcirq package
         run: |
           STIMCIRQ_PKG=$(conda build ./recipes/quantumlib-stimcirq --output --variant-config-files ./recipes/conda_build_config.yaml)
           echo "Installing quantumlib-stimcirq from: $STIMCIRQ_PKG"
           conda install -y "$STIMCIRQ_PKG"
-      
+
       - name: Test quantumlib-stimcirq installation
         run: |
           echo "--- INFO: Testing quantumlib-stimcirq ---"
@@ -115,7 +131,7 @@ jobs:
           python -c "import quantumlib_stim; import stimcirq; print('Both packages work together')"
           STIMCIRQ_PKG=$(conda build ./recipes/quantumlib-stimcirq --output --variant-config-files ./recipes/conda_build_config.yaml)
           conda build --test "$STIMCIRQ_PKG"
-      
+
       # --- Final Integration Test ---
       - name: Final integration test
         run: |
