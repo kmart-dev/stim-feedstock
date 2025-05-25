@@ -16,8 +16,8 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
         # Explicitly define the Python versions you want to test.
-        # Adding multiple versions helps confirm the matrix is working.
-        python-version: ["3.10", "3.9", "3.8"] # Ensure these are quoted strings
+        # Now set to only build with Python 3.10 as requested.
+        python-version: ["3.10"] # Only build for Python 3.10
 
     # IMPORTANT: This defaults block ensures all 'run' steps use a login shell
     # which correctly picks up the conda initialization.
@@ -43,7 +43,7 @@ jobs:
         # It has improved shell initialization and robustness.
         uses: conda-incubator/setup-miniconda@v3
         with:
-          python-version: ${{ matrix.python-version }} # This should inject 3.10, 3.9, or 3.8
+          python-version: ${{ matrix.python-version }} # This should now only inject 3.10
           miniconda-version: "latest" # Always get the most recent Miniconda installer
           activate-environment: build # This tells setup-miniconda to create and activate an environment named 'build'
           auto-activate-base: false # Prevent automatic activation of the base environment
