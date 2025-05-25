@@ -41,6 +41,9 @@ test:
     - stim
   requires:
     - pytest
+  commands:
+    # This command will only execute if all preceding 'imports' were successful.
+    - echo "🎉 Conda tests for quantumlib-stim passed successfully! 🎉"
 
 about:
   home: https://github.com/quantumlib/stim

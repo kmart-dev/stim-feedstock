@@ -30,6 +30,7 @@ test:
   commands:
     - python -c "import stimcirq; print('stimcirq imported successfully')"
     - python -c "import quantumlib_stim; import stimcirq; print('Both packages work together')"
+    - echo "🎉 Conda tests for quantumlib-stimcirq passed successfully! 🎉"
 
 about:
   home: https://github.com/quantumlib/stim
