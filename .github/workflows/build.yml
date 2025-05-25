@@ -54,6 +54,12 @@ jobs:
           auto-update-conda: true
           conda-init-shell: bash
 
+      - name: Install conda-verify
+        run: conda install -n build conda-verify
+
+#      - name: Generate repodata.jso
+#        run: conda index c/Users/runneradmin/miniconda3/envs/build/conda-bld
+
       - name: Ensure Conda is in PATH and environment is activated
         run: |
           echo "Adding conda to PATH and activating environment"
