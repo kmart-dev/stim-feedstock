@@ -45,14 +45,14 @@ jobs:
           echo "--- INFO: Ensuring Xcode CLI tools and specific Xcode version are installed ---"
           sudo softwareupdate --install-rosetta --agree-to-license || echo "Rosetta already installed"
           # Switch to a compatible Xcode version (14.3)
-          sudo xcode-select --switch /Applications/Xcode_14.3.app
+          # sudo xcode-select --switch /Applications/Xcode_14.3.app
           # Set environment for compatible SDK
-          export SDKROOT=$(xcrun --sdk macosx11.0 --show-sdk-path)
-          export MACOSX_DEPLOYMENT_TARGET=10.9
+          export SDKROOT=$(xcrun --sdk macosx13.3 --show-sdk-path)
+          export MACOSX_DEPLOYMENT_TARGET=11.0
           export CC=clang
           export CXX=clang++
           echo "SDKROOT=${SDKROOT}" >> $GITHUB_ENV
-          echo "MACOSX_DEPLOYMENT_TARGET=10.9" >> $GITHUB_ENV
+          echo "MACOSX_DEPLOYMENT_TARGET=11.0" >> $GITHUB_ENV
           echo "CC=clang" >> $GITHUB_ENV
           echo "CXX=clang++" >> $GITHUB_ENV
 
