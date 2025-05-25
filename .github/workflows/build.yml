@@ -3,142 +3,134 @@ name: Debug Cross-Platform Conda Build
 on:
   push:
     branches:
-      - main # Only run on main branch pushes
-      - '**' # Also run on any branch for debugging
-  pull_request:
+      - main # Trigger on pushes to the main branch
+      - '**' # Trigger on pushes to any branch (useful for debugging)
+  pull_request: # Trigger on pull requests
 
 jobs:
   build:
     name: Build (${{ matrix.os }}, Python ${{ matrix.python-version }})
     runs-on: ${{ matrix.os }}
     strategy:
-      fail-fast: false # Don't cancel other matrix jobs if one fails
+      fail-fast: false # Do not cancel other matrix jobs if one fails; allows full debugging output
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-        python-version: ["3.10", "3.9", "3.8"] # Add more versions for testing
-        # Add architecture if needed, e.g., for self-hosted runners or future features
-        # architecture: [x64, arm64] # Example for different architectures
+        # Explicitly define the Python versions you want to test.
+        # Adding multiple versions helps confirm the matrix is working.
+        python-version: ["3.10", "3.9", "3.8"] # Ensure these are quoted strings
+
+    # IMPORTANT: This defaults block ensures all 'run' steps use a login shell
+    # which correctly picks up the conda initialization.
+    defaults:
+      run:
+        # For Linux/macOS, use bash in login mode.
+        # For Windows, GitHub Actions' default PowerShell usually handles this correctly,
+        # but you can specify 'powershell' if needed for explicit control.
+        shell: bash -l {0}
 
     steps:
-      - name: Checkout source
-        uses: actions/checkout@v4 # Use the latest stable version
+      - name: Checkout source code
+        uses: actions/checkout@v4 # Use the latest stable version of the checkout action
 
-      - name: Print matrix variables
+      - name: Print matrix variables for verification
         run: |
+          echo "--- DEBUG: Matrix Variables ---"
           echo "Matrix OS: ${{ matrix.os }}"
           echo "Matrix Python: ${{ matrix.python-version }}"
 
-      - name: Set up Miniconda
-        uses: conda-incubator/setup-miniconda@v3 # Use v3 for latest fixes and features
+      - name: Set up Miniconda environment
+        # Use v3 of setup-miniconda for the latest features and bug fixes.
+        # It has improved shell initialization and robustness.
+        uses: conda-incubator/setup-miniconda@v3
         with:
-          python-version: ${{ matrix.python-version }}
-          miniconda-version: "latest"
-          # By default, setup-miniconda creates an env named 'base' and then activates it.
-          # If you want a custom environment named 'build', it's usually better to create it
-          # explicitly after setting up miniconda, then activate it.
-          # However, activate-environment: build should work if you create it later.
-          activate-environment: build # This will attempt to activate an env named 'build'
-          auto-activate-base: false
-          auto-update-conda: true
-          # Add this to ensure conda is properly initialized for the shell
-          # It's crucial for subsequent `conda` commands to work
-          conda-init-shell: bash # Or powershell on Windows, setup-miniconda usually handles this
+          python-version: ${{ matrix.python-version }} # This should inject 3.10, 3.9, or 3.8
+          miniconda-version: "latest" # Always get the most recent Miniconda installer
+          activate-environment: build # This tells setup-miniconda to create and activate an environment named 'build'
+          auto-activate-base: false # Prevent automatic activation of the base environment
+          auto-update-conda: true # Ensure conda is up-to-date within the Miniconda installation
+          # `conda-init-shell` is still good practice, but `defaults.run.shell` is more critical
+          # for ensuring subsequent steps use the initialized shell.
+          conda-init-shell: bash # Explicitly initialize for bash shells on Linux/macOS
 
-      # --- Enhanced Debugging Steps ---
+      # --- Extensive Debugging Steps ---
 
-      - name: Debug - Print initial PATH and env
+      - name: Debug - Print PATH and all environment variables
         run: |
-          echo "--- DEBUG: Initial PATH ---"
+          echo "--- DEBUG: Current PATH ---"
           echo "$PATH"
-          echo "--- DEBUG: Initial ENV ---"
+          echo "--- DEBUG: All Environment Variables ---"
           env | sort # Sort for easier readability
 
-      - name: Debug - Verify conda environment (after setup-miniconda)
+      - name: Debug - Verify Conda and Python installation
         run: |
-          echo "--- DEBUG: Which conda (after setup) ---"
-          which conda || echo "conda not found in PATH"
-          echo "--- DEBUG: Conda version (after setup) ---"
-          conda --version || echo "conda command failed"
-          echo "--- DEBUG: Conda env list (after setup) ---"
-          conda env list || echo "conda env list failed"
-          echo "--- DEBUG: Active environment (after setup) ---"
-          conda info --envs || echo "conda info --envs failed"
-          echo "--- DEBUG: Python version in PATH (after setup) ---"
-          which python || echo "python not found in PATH"
-          python --version || echo "python command failed"
-        shell: bash # Ensure bash is used consistently for these checks
+          echo "--- DEBUG: Which conda executable is found? ---"
+          which conda || echo "Error: 'conda' command not found in PATH."
+          echo "--- DEBUG: Conda version ---"
+          conda --version || echo "Error: 'conda --version' failed."
+          echo "--- DEBUG: List of all Conda environments ---"
+          conda env list || echo "Error: 'conda env list' failed."
+          echo "--- DEBUG: Currently active Conda environment ---"
+          conda info --envs | grep "*" || echo "No active environment indicated by 'conda info --envs'."
+          echo "--- DEBUG: Which python executable is found? ---"
+          which python || echo "Error: 'python' command not found in PATH."
+          echo "--- DEBUG: Python version in current environment ---"
+          python --version || echo "Error: 'python --version' failed."
 
-      # --- Conda Environment Creation and Activation (More Explicit) ---
-      - name: Create and activate 'build' environment
+      - name: Debug - Show Conda configuration and detailed info
         run: |
-          conda create -y -n build python=${{ matrix.python-version }}
-          conda activate build
-        shell: bash
-
-      - name: Debug - Verify 'build' environment activation
-        run: |
-          echo "--- DEBUG: Which python (after explicit activate) ---"
-          which python || echo "python not found in PATH"
-          python --version || echo "python command failed"
-          echo "--- DEBUG: Active environment (after explicit activate) ---"
-          conda info --envs | grep "*" || echo "No active environment indicated by conda"
-        shell: bash
-
-
-      # --- Original build steps with minor improvements ---
-
-      - name: Show conda config and version info
-        run: |
+          echo "--- DEBUG: Conda Configuration ---"
           conda config --show
+          echo "--- DEBUG: Detailed Conda Information ---"
           conda info
-          echo ">> Python version in PATH (after config)"
-          python --version
-          which python
-        shell: bash
 
-      - name: Check pre-installed packages
+      - name: Debug - Check pre-installed packages in the active environment
         run: |
-          echo ">> conda list before install"
+          echo "--- DEBUG: conda list before package installation ---"
           conda list
-        shell: bash
 
-      - name: Configure conda-forge and install build tools
+      # --- Conda Configuration and Package Installation ---
+
+      - name: Configure conda-forge channel and install build tools
         run: |
-          # Use `conda config --set` instead of `--add` for `channel_priority` to be explicit
+          echo "--- INFO: Configuring conda channels and installing build tools ---"
+          # Add conda-forge channel with highest priority
           conda config --add channels conda-forge
+          # Add defaults channel (often implicitly included, but explicit doesn't hurt)
           conda config --add channels defaults
+          # Set channel priority to flexible for better dependency resolution
           conda config --set channel_priority flexible
-          # Use `mamba` for faster installs
-          mamba install -y numpy=1.22 conda-build boa m # 'm' for mamba, not 'mamba' for speed if not already installed
-        shell: bash
-
-      - name: Verify installed tools
-        run: |
-          echo "--- DEBUG: Verify numpy, conda-build, boa, mamba ---"
-          python -c "import numpy; print(numpy.__version__)"
-          conda build --version
-          boa --version
-          mamba --version
-          echo ">> conda list after install"
+          # Install necessary packages using mamba for speed (if mamba is available)
+          # 'mamba' package for the mamba executable.
+          mamba install -y numpy=1.22 conda-build boa mamba
+          echo "--- DEBUG: conda list after package installation ---"
           conda list
-        shell: bash
+
+      - name: Debug - Verify installed tools
+        run: |
+          echo "--- DEBUG: Verifying numpy, conda-build, boa, mamba versions ---"
+          python -c "import numpy; print(f'Numpy version: {numpy.__version__}')" || echo "Numpy check failed."
+          conda build --version || echo "conda-build check failed."
+          boa --version || echo "boa check failed."
+          mamba --version || echo "mamba check failed."
+
+      # --- Build and Test Steps ---
 
       - name: Build package with mamba
         run: |
-          echo ">> conda build output path"
-          conda build recipe --output
-          echo ">> mambabuild"
-          # Ensure mamba is called correctly, assuming 'mamba' executable is in PATH
-          mamba mambabuild recipe
-        shell: bash
+          echo "--- INFO: Building package with mamba ---"
+          echo ">> Determining conda build output path"
+          # Capture the output path for consistent use
+          BUILD_OUTPUT_PATH=$(conda build recipe --output)
+          echo "Build output path: $BUILD_OUTPUT_PATH"
+          echo ">> Running mambabuild"
+          mamba mambabuild recipe # Use mamba's build command for speed
 
       - name: Test built package
         run: |
-          echo ">> Testing built package"
-          # Ensure the correct path to the built package is passed
-          # This assumes `conda mambabuild recipe` leaves the build path in the current directory or a known location
-          # For more robustness, capture the output of `conda build recipe --output` into a variable
-          # Example: PKG_PATH=$(conda build recipe --output) && conda build --test $PKG_PATH
-          conda build --test $(conda build recipe --output)
-        shell: bash
+          echo "--- INFO: Testing built package ---"
+          # Retrieve the build output path again or pass it from the previous step if preferred
+          TEST_PACKAGE_PATH=$(conda build recipe --output)
+          echo "Testing package at: $TEST_PACKAGE_PATH"
+          conda build --test "$TEST_PACKAGE_PATH" # Use quotes for paths with spaces
+
 
