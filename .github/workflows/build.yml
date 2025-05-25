@@ -109,20 +109,25 @@ jobs:
           mamba --version || echo "mamba check failed."
 
       # --- Build and Install quantumlib-stim (required for quantumlib-stimcirq) ---
-      - name: Build quantumlib-stim package
+      - name: Build quantumlib-stim package (fast)
         run: |
-          echo "--- INFO: Building quantumlib-stim ---"
-          mamba mambabuild ./recipe --output-id quantumlib-stim
-          # Install the built stim package into the current env so it's available for cirq
+          echo "--- INFO: Building quantumlib-stim with mamba ---"
+          mamba mambabuild ./recipe
+
+      - name: Install built quantumlib-stim package
+        run: |
           STIM_BLD_PATH=$(conda build recipe --output --output-id quantumlib-stim)
           echo "Installing stim from: $STIM_BLD_PATH"
           conda install -y "$STIM_BLD_PATH"
 
       # --- Build and Install quantumlib-stimcirq (after stim is installed) ---
-      - name: Build quantumlib-stimcirq package
+      - name: Build quantumlib-stimcirq package (fast)
         run: |
-          echo "--- INFO: Building quantumlib-stimcirq ---"
-          mamba mambabuild ./recipe --output-id quantumlib-stimcirq
+          echo "--- INFO: Building quantumlib-stimcirq with mamba ---"
+          mamba mambabuild ./recipe
+
+      - name: Install built quantumlib-stimcirq package
+        run: |
           STIMCIRQ_BLD_PATH=$(conda build recipe --output --output-id quantumlib-stimcirq)
           echo "Installing stimcirq from: $STIMCIRQ_BLD_PATH"
           conda install -y "$STIMCIRQ_BLD_PATH"
@@ -134,5 +139,3 @@ jobs:
           conda build --test "$(conda build recipe --output --output-id quantumlib-stim)"
           echo "--- INFO: Testing quantumlib-stimcirq ---"
           conda build --test "$(conda build recipe --output --output-id quantumlib-stimcirq)"
-
-
