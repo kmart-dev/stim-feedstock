@@ -78,6 +78,9 @@ jobs:
           auto-update-conda: true
           conda-init-shell: bash
 
+      - name: Install conda-verify
+        run: conda install -n build conda-verify
+
       - name: Configure conda channels and install build tools
         run: |
           echo "--- INFO: Configuring conda channels and installing build tools ---"
