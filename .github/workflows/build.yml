@@ -43,26 +43,29 @@ jobs:
         if: runner.os == 'macOS'
         run: |
           echo "--- INFO: Ensuring Xcode CLI tools and specific Xcode version are installed ---"
+          ls /Applications/Xcode* || true
           sudo softwareupdate --install-rosetta --agree-to-license || echo "Rosetta already installed"
+          sudo xcode-select -s /Applications/Xcode_15.0.app/Contents/Developer
+          xcode-select -p
           # Switch to a compatible Xcode version (14.3)
           # sudo xcode-select --switch /Applications/Xcode_14.3.app
           # Set environment for compatible SDK
-          export SDKROOT=$(xcrun --sdk macosx13.3 --show-sdk-path)
-          export MACOSX_DEPLOYMENT_TARGET=11.0
-          export CC=clang
-          export CXX=clang++
-          echo "SDKROOT=${SDKROOT}" >> $GITHUB_ENV
-          echo "MACOSX_DEPLOYMENT_TARGET=11.0" >> $GITHUB_ENV
-          echo "CC=clang" >> $GITHUB_ENV
-          echo "CXX=clang++" >> $GITHUB_ENV
+          # export SDKROOT=$(xcrun --sdk macosx13.3 --show-sdk-path)
+          # export MACOSX_DEPLOYMENT_TARGET=11.0
+          # export CC=clang
+          # export CXX=clang++
+          # echo "SDKROOT=${SDKROOT}" >> $GITHUB_ENV
+          # echo "MACOSX_DEPLOYMENT_TARGET=11.0" >> $GITHUB_ENV
+          # echo "CC=clang" >> $GITHUB_ENV
+          # echo "CXX=clang++" >> $GITHUB_ENV
 
-      - name: Configure environment flags (macOS)
-        if: runner.os == 'macOS'
-        run: |
-          export CFLAGS="-isysroot $SDKROOT"
-          export LDFLAGS="-isysroot $SDKROOT"
-          echo "CFLAGS=$CFLAGS" >> $GITHUB_ENV
-          echo "LDFLAGS=$LDFLAGS" >> $GITHUB_ENV
+      # - name: Configure environment flags (macOS)
+       #  if: runner.os == 'macOS'
+        # run: |
+         #  export CFLAGS="-isysroot $SDKROOT"
+         #  export LDFLAGS="-isysroot $SDKROOT"
+         #  echo "CFLAGS=$CFLAGS" >> $GITHUB_ENV
+         #  echo "LDFLAGS=$LDFLAGS" >> $GITHUB_ENV
 
       # --- Conda Setup ---
       - name: Set up Miniconda environment
