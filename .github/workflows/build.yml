@@ -55,6 +55,7 @@ jobs:
         shell: bash -l {0}
         run: |
           echo "Building for platform: ${{ matrix.target-platform }} with Python ${{ matrix.python-version }}"
+          source "$(conda info --base)/etc/profile.d/conda.sh"  # Ensure conda is sourced
           conda activate build-env
           CONDA_NO_PLUGINS=true conda build ${{ github.workspace }}/recipe \
             -c conda-forge \
