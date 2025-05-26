@@ -32,8 +32,7 @@ jobs:
           channel-priority: strict
 
       - name: Install conda-build and mamba
-        #run: conda install -n base -c conda-forge conda-build mamba
-        run: conda install -n base -c conda-forge conda-build=3.26 mamba=1.5
+        run: conda install -n base -c conda-forge conda-build mamba
 
       - name: Configure CONDA_SUBDIR (Apple Silicon only)
         if: matrix.os == 'macos-latest'
