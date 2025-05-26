@@ -24,6 +24,7 @@ outputs:
     requirements:
       host:
         - python >=3.10,<3.12
+        - pybind11
         - pip
         - numpy 1.21.*  # [py==310]
         - numpy 1.23.*  # [py==311]
