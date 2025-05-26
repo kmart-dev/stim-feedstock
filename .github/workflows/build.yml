@@ -3,7 +3,7 @@ on: [push, pull_request]
 
 jobs:
   build:
-    name: Build on ${{ matrix.os }} with Python ${{ matrix.python-version }}
+    name: Build on ${{ matrix.os }} w/ Py${{ matrix.python-version }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -47,5 +47,5 @@ jobs:
       - name: Build package
         run: |
           echo "Building for platform: ${{ matrix.target-platform }} with Python ${{ matrix.python-version }}"
-          conda mambabuild ${{ github.workspace }}/recipe -c conda-forge --python ${{ matrix.python-version }}
+          conda build ${{ github.workspace }}/recipe -c conda-forge --python ${{ matrix.python-version }}
 
