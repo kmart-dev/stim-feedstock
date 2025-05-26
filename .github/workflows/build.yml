@@ -1,157 +1,52 @@
-name: Build Stim Packages
-on:
-  push:
-    branches:
-      - main
-      - '**'
-  pull_request:
+name: build-conda-packages
+on: [push, pull_request]
 
 jobs:
   build:
-    name: Build (${{ matrix.os }}, Python ${{ matrix.python-version }})
+    name: Build on ${{ matrix.os }} with Python ${{ matrix.python-version }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        os:
-          - ubuntu-latest  # [linux]
-          - macos-latest   # [macos]
-          - windows-latest # [win]
-        python-version: ["3.10"]
-    defaults:
-      run:
-        shell: bash -l {0}
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python-version: ["3.10", "3.11"]
+        include:
+          - os: macos-latest
+            target-platform: osx-64
+          - os: ubuntu-latest
+            target-platform: linux-64
+          - os: windows-latest
+            target-platform: win-64
+    env:
+      CONDA_BLD_PATH: ./build_artifacts
 
     steps:
-      - name: Checkout source code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Print matrix variables for verification
-        run: |
-          echo "--- DEBUG: Matrix Variables ---"
-          echo "Matrix OS: ${{ matrix.os }}"
-          echo "Matrix Python: ${{ matrix.python-version }}"
-
-      # --- OS-Specific Build Tools ---
-      - name: Install Windows build tools
-        if: runner.os == 'Windows'
-        run: |
-          choco install visualstudio2019buildtools --version=16.11.10 -y
-          choco install visualstudio2019-workload-vctools -y
-
-      # --- Set UTF-8 encoding for Windows ---
-      - name: Set UTF-8 encoding for Windows
-        if: runner.os == 'Windows'
-        run: |
-          chcp 65001
-          set PYTHONIOENCODING=utf-8
-
-      - name: Install specific Xcode version and set macOS SDK
-        if: runner.os == 'macOS'
-        run: |
-          echo "--- INFO: Ensuring Xcode CLI tools and specific Xcode version are installed ---"
-          ls /Applications/Xcode_*.app || true
-          sudo softwareupdate --install-rosetta --agree-to-license || echo "Rosetta already installed"
-          sudo xcode-select -s /Applications/Xcode_15.3.app/Contents/Developer
-          xcode-select -p
-          # Switch to a compatible Xcode version (14.3)
-          # sudo xcode-select --switch /Applications/Xcode_14.3.app
-          # Set environment for compatible SDK
-          # export SDKROOT=$(xcrun --sdk macosx13.3 --show-sdk-path)
-          # export MACOSX_DEPLOYMENT_TARGET=11.0
-          # export CC=clang
-          # export CXX=clang++
-          # echo "SDKROOT=${SDKROOT}" >> $GITHUB_ENV
-          # echo "MACOSX_DEPLOYMENT_TARGET=11.0" >> $GITHUB_ENV
-          # echo "CC=clang" >> $GITHUB_ENV
-          # echo "CXX=clang++" >> $GITHUB_ENV
-
-      # - name: Configure environment flags (macOS)
-       #  if: runner.os == 'macOS'
-        # run: |
-         #  export CFLAGS="-isysroot $SDKROOT"
-         #  export LDFLAGS="-isysroot $SDKROOT"
-         #  echo "CFLAGS=$CFLAGS" >> $GITHUB_ENV
-         #  echo "LDFLAGS=$LDFLAGS" >> $GITHUB_ENV
-
-      # --- Conda Setup ---
-      - name: Set up Miniconda environment
-        uses: conda-incubator/setup-miniconda@v3
+      - name: Set up Miniconda
+        uses: conda-incubator/setup-miniconda@v2
         with:
           python-version: ${{ matrix.python-version }}
-          miniconda-version: "latest"
-          activate-environment: build
-          auto-activate-base: false
           auto-update-conda: true
-          conda-init-shell: bash
+          channels: conda-forge
+          channel-priority: strict
 
-      - name: Install conda-verify
-        run: conda install -n build conda-verify
+      - name: Install conda-build and mamba
+        #run: conda install -n base -c conda-forge conda-build mamba
+        run: conda install -n base -c conda-forge conda-build=3.26 mamba=1.5
 
-      - name: Configure conda channels and install build tools
+      - name: Configure CONDA_SUBDIR (Apple Silicon only)
+        if: matrix.os == 'macos-latest'
+        run: echo "CONDA_SUBDIR=osx-arm64" >> $GITHUB_ENV
+
+      - name: Cache conda build folder
+        uses: actions/cache@v3
+        with:
+          path: ./build_artifacts
+          key: conda-build-${{ matrix.os }}-${{ matrix.python-version }}
+
+      - name: Build package
         run: |
-          echo "--- INFO: Configuring conda channels and installing build tools ---"
-          conda config --add channels conda-forge
-          conda config --add channels defaults
-          conda config --set channel_priority flexible
-          conda install -y numpy=1.22 conda-build boa mamba
-          echo "--- DEBUG: Checking conda_build_config.yaml ---"
-          ls -la recipes/conda_build_config.yaml || echo "No global conda_build_config.yaml found"
+          echo "Building for platform: ${{ matrix.target-platform }} with Python ${{ matrix.python-version }}"
+          conda mambabuild ${{ github.workspace }}/recipe -c conda-forge --python ${{ matrix.python-version }}
 
-      # --- Build quantumlib-stim FIRST (dependency for stimcirq) ---
-      - name: Build quantumlib-stim package
-        run: |
-          echo "--- INFO: Building quantumlib-stim ---"
-          export CC=${CC:-clang}
-          export CXX=${CXX:-clang++}
-          # Use the global conda_build_config.yaml from recipes/ directory
-          #mamba mambabuild ./recipes/quantumlib-stim --variant-config-files ./recipes/conda_build_config.yaml
-          conda build ./recipes/quantumlib-stim --variant-config-files ./recipes/conda_build_config.yaml
-
-      - name: Install built quantumlib-stim package
-        run: |
-          # Install the locally built stim package
-          STIM_PKG=$(conda build ./recipes/quantumlib-stim --output --variant-config-files ./recipes/conda_build_config.yaml)
-          echo "Installing quantumlib-stim from: $STIM_PKG"
-          conda install -y "$STIM_PKG"
-
-      - name: Test quantumlib-stim installation
-        run: |
-          echo "--- INFO: Testing quantumlib-stim ---"
-          # python -c "import quantumlib_stim; print('quantumlib-stim imported successfully')"
-          STIM_PKG=$(conda build ./recipes/quantumlib-stim --output --variant-config-files ./recipes/conda_build_config.yaml)
-          conda build --test "$STIM_PKG"
-
-      # --- Build quantumlib-stimcirq SECOND (depends on stim) ---
-      - name: Build quantumlib-stimcirq package
-        run: |
-          echo "--- INFO: Building quantumlib-stimcirq ---"
-          # Add the local conda-bld channel so stimcirq can find the locally built stim
-          conda config --add channels file://$(conda info --base)/envs/build/conda-bld
-          #mamba mambabuild ./recipes/quantumlib-stimcirq --variant-config-files ./recipes/conda_build_config.yaml
-          conda build ./recipes/quantumlib-stimcirq --variant-config-files ./recipes/conda_build_config.yaml
-
-      - name: Install built quantumlib-stimcirq package
-        run: |
-          STIMCIRQ_PKG=$(conda build ./recipes/quantumlib-stimcirq --output --variant-config-files ./recipes/conda_build_config.yaml)
-          echo "Installing quantumlib-stimcirq from: $STIMCIRQ_PKG"
-          conda install -y "$STIMCIRQ_PKG"
-
-      - name: Test quantumlib-stimcirq installation
-        run: |
-          echo "--- INFO: Testing quantumlib-stimcirq ---"
-          python -c "import stimcirq; print('stimcirq imported successfully')"
-          python -c "import quantumlib_stim; import stimcirq; print('Both packages work together')"
-          STIMCIRQ_PKG=$(conda build ./recipes/quantumlib-stimcirq --output --variant-config-files ./recipes/conda_build_config.yaml)
-          conda build --test "$STIMCIRQ_PKG"
-
-      # --- Final Integration Test ---
-      - name: Final integration test
-        run: |
-          echo "--- INFO: Running final integration test ---"
-          python -c "
-          import quantumlib_stim as stim
-          import stimcirq
-          print(f'Stim version: {stim.__version__}')
-          print('Integration test passed!')
-          "

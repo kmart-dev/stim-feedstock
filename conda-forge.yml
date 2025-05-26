@@ -1,33 +1,36 @@
+# conda-forge.yml
+
+recipe_dir: recipe
+clone_depth: 0
+
 provider:
   linux: github_actions
   win: github_actions
   osx: github_actions
 
 build_platform:
-  linux_64: linux_64 # [linux]
-  osx_64: osx_64     # [osx]
-  win_64: win_64     # [win]
-
-clone_depth: 0
-recipe_dir: recipe
-
-# Don't use build_with_mambar, because not supported in conda-forge.yml
-# build_with_mamba: true
+  linux_64: linux_64
+  win_64: win_64
+  osx_64: osx_64
+  # Enable this when ready to cross-comple for Applie Silicon:
+  #  osx_arm64: osx_arm64
 
 github_actions:
   self_hosted: false
 
-# Don't include this unless you're actively using Azure
-#azure:
-#  enabled: false
+test_on_native_only: true
 
+bot:
+  automerge: false
+
+# Reduce unnecessary rendering
 skip_render:
   - README.md
   - LICENSE.txt
-  - .gitattributes
   - .gitignore
+  - .gitattributes
   - build-locally.py
-  - LICENSE
   - .github/CONTRIBUTING.md
   - .github/ISSUE_TEMPLATE.md
   - .github/PULL_REQUEST_TEMPLATE.md
+

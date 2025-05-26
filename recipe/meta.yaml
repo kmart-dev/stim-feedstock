@@ -1,0 +1,65 @@
+{% set version = "1.15.0" %}
+{% set stim_sha = "95236006859d6754be99629d4fb44788e742e962ac8c59caad421ca088f7350e" %}
+{% set stimcirq_sha = "bf51db80934dec07be4799f5e15b6eed5b111078a7989fd8dfc504ed3a30cadd" %}
+
+package:
+  # (No top-level name/version since using outputs)
+
+source:
+  - url: https://pypi.io/packages/source/s/stim/stim-{{ version }}.tar.gz
+    sha256: {{ stim_sha }}
+  - url: https://pypi.io/packages/source/s/stimcirq/stimcirq-{{ version }}.tar.gz
+    sha256: {{ stimcirq_sha }}
+    folder: stimcirq
+
+build:
+  number: 0
+  script: |
+    {{ PYTHON }} -m pip install . --no-deps -vv
+    {{ PYTHON }} -m pip install ./stimcirq --no-deps -vv
+
+outputs:
+  - name: quantumlib-stim
+    version: {{ version }}
+    requirements:
+      host:
+        - python >=3.10,<3.12
+        - pip
+        - numpy 1.21.*  # [py==310]
+        - numpy 1.23.*  # [py==311]
+        - {{ compiler('cxx') }}
+        - cmake
+        - ninja                # use Ninja for faster CMake builds
+      run:
+        - python >=3.10,<3.12
+        - numpy >=1.21,<2.0
+    test:
+      imports:
+        - stim
+      commands:
+        - python -c "import stim; s = stim.TableauSimulator(); s.h(0)"   # basic API usage test
+    about:
+      license: Apache-2.0
+      license_file: LICENSE
+      summary: "A fast simulator for quantum stabilizer circuits:contentReference[oaicite:0]{index=0}."
+
+  - name: quantumlib-stimcirq
+    version: {{ version }}
+    build:
+      noarch: python              # pure Python, no architecture-specific binaries
+    requirements:
+      run:
+        - python >=3.10
+        - quantumlib-stim =={{ version }}
+        - cirq-core >=1.0         # Cirq core library (for cirq.Circuit, Sampler, etc.)
+    test:
+      imports:
+        - stimcirq
+      commands:
+        - python -c "import stimcirq, stim, cirq; sampler = stimcirq.StimSampler(); q = cirq.LineQubit(0); c = cirq.Circuit(cirq.X(q)); sampler.run(c, repetitions=1)"
+      # (The above test verifies that stimcirq can use stim as a Cirq simulator without errors)
+    about:
+      license: Apache-2.0
+      license_file: LICENSE
+      summary: "Tools for interop between Google Cirq and Stim (uses Stim as a cirq simulator):contentReference[oaicite:1]{index=1}."
+
