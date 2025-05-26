@@ -30,7 +30,6 @@ jobs:
           auto-update-conda: true
           channels: conda-forge
           channel-priority: strict
-          environment-file: false # Just use base environment
           activate-environment: base
 
       - name: Install conda-build and mamba
