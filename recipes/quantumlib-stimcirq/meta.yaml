@@ -12,7 +12,7 @@ source:
 build:
   number: 0
   script: "python -m pip install ./glue/cirq --no-deps --ignore-installed --no-build-isolation"
-  skip: true  # [py<310 or py>310 or osx]
+#  skip: true  # [py<310 or py>310 or osx]
 
 requirements:
   host:
@@ -20,7 +20,7 @@ requirements:
     - pip
   run:
     - python
-    - python_abi 3.10.* *_cp310
+    - python_abi {{ python }} *_cp{{ python.replace('.', '') }}
     - quantumlib-stim  # This is the key dependency!
     - cirq
 

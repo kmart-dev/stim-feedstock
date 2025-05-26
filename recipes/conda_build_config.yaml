@@ -7,11 +7,7 @@ python:
 
 # NumPy versions and pinning strategy
 numpy:
-  - "1.22"
-
-# Pin compatibility for runtime
-pin_compatible:
-  numpy: x.x
+  - "1.22.*"
 
 # C++ compiler configuration
 cxx_compiler:
@@ -37,11 +33,8 @@ target_platform:
 
 # Skip patterns (can be overridden in individual recipes)
 # For example, if you want to skip certain Python versions globally
-skip:
-  - py<310 or py>310  # Only build for Python 3.10
-
-# ZIP safety for packages
-zip_safe: false
+#skip:
+#  - py<310 or py>310  # Only build for Python 3.10
 
 # Build string customization
 build_string_pattern: "py{py}{build_number}_0"

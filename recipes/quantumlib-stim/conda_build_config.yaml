@@ -6,10 +6,10 @@ build_string_pattern: "h{PKG_HASH}_{PKG_BUILDNUM}"
 
 # Additional skip conditions specific to stim
 # (combines with global skip conditions)
-skip:
-  - py<310 or py>310
-  - osx and x86_64  # Skip Intel Mac if desired
-  - osx
+#skip:
+#  - py<310 or py>310
+#  - osx and x86_64  # Skip Intel Mac if desired
+#  - osx
 
 # Stim requires specific numpy version for C++ bindings
 numpy:
