@@ -39,13 +39,20 @@ jobs:
           choco install visualstudio2019buildtools --version=16.11.10 -y
           choco install visualstudio2019-workload-vctools -y
 
+      # --- Set UTF-8 encoding for Windows ---
+      - name: Set UTF-8 encoding for Windows
+        if: runner.os == 'Windows'
+        run: |
+          chcp 65001
+          set PYTHONIOENCODING=utf-8
+
       - name: Install specific Xcode version and set macOS SDK
         if: runner.os == 'macOS'
         run: |
           echo "--- INFO: Ensuring Xcode CLI tools and specific Xcode version are installed ---"
-          ls /Applications/Xcode* || true
+          ls /Applications/Xcode_*.app || true
           sudo softwareupdate --install-rosetta --agree-to-license || echo "Rosetta already installed"
-          sudo xcode-select -s /Applications/Xcode_15.0.app/Contents/Developer
+          sudo xcode-select -s /Applications/Xcode_15.3.app/Contents/Developer
           xcode-select -p
           # Switch to a compatible Xcode version (14.3)
           # sudo xcode-select --switch /Applications/Xcode_14.3.app
