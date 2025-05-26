@@ -15,8 +15,8 @@ source:
 build:
   number: 0
   script: |
-    {{ PYTHON }} -m pip install . --no-deps -vv
-    {{ PYTHON }} -m pip install ./stimcirq --no-deps -vv
+    python -m pip install . --no-deps -vv
+    python -m pip install ./stimcirq --no-deps -vv
 
 outputs:
   - name: quantumlib-stim
