@@ -22,7 +22,7 @@ outputs:
   - name: quantumlib-stim
     version: {{ version }}
     requirements:
-      host:
+      build:
         - python >=3.10,<3.12
         - pybind11
         - pip
@@ -31,6 +31,15 @@ outputs:
         - {{ compiler('cxx') }}
         - cmake
         - ninja                # use Ninja for faster CMake builds
+      host:
+        - python >=3.10,<3.12
+        - pybind11
+        - pip
+        - numpy 1.21.*  # [py==310]
+        - numpy 1.23.*  # [py==311]
+        - {{ compiler('cxx') }}
+        - cmake
+        - ninja
       run:
         - python >=3.10,<3.12
         - numpy >=1.21,<2.0
@@ -63,4 +72,3 @@ outputs:
       license: Apache-2.0
       license_file: LICENSE
       summary: "Tools for interop between Google Cirq and Stim (uses Stim as a cirq simulator):contentReference[oaicite:1]{index=1}."
-
