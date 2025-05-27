@@ -56,9 +56,13 @@ jobs:
         shell: bash -l {0}
         run: |
           echo "Building for platform: ${{ matrix.target-platform }} with Python ${{ matrix.python-version }}"
-          source "$(conda info --base)/etc/profile.d/conda.sh"
-          conda activate build-env
+          if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
+            call "%CONDA%\\condabin\\conda.bat" activate build-env
+          else
+            source "$(conda info --base)/etc/profile.d/conda.sh"
+            conda activate build-env
+          fi
           conda build ${{ github.workspace }}/recipe \
             -c conda-forge \
             --output-folder $CONDA_BLD_PATH \
-            --python ${{ matrix.python-version }}
+      --python ${{ matrix.python-version }}
